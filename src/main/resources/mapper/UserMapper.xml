@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shoto.springboot.shiro.mapper.UserMapper">
+
+    <resultMap type="com.shoto.springboot.shiro.entity.User" id="baseUser">
+        <id column="id" property="id" javaType="java.lang.String" jdbcType="VARCHAR"/>
+        <id column="username" property="username" javaType="java.lang.String" jdbcType="VARCHAR"/>
+        <id column="password" property="password" javaType="java.lang.String" jdbcType="VARCHAR"/>
+        <id column="status" property="status" javaType="java.lang.String" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <select id="findUserByName" resultMap="baseUser" parameterType="String">
+        SELECT * FROM user t where t.username = #{name}
+    </select>
+</mapper>
