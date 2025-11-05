@@ -3,7 +3,6 @@ package com.shoto.springboot.shiro.config;
 import com.shoto.springboot.shiro.realm.UserShiroRealm;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -18,8 +17,6 @@ public class ShiroConfiguration {
 
     /**
      * 将Realm注册到securityManager中
-     *
-     * @return
      */
     @Bean("securityManager")
     public DefaultWebSecurityManager securityManager() {
@@ -70,8 +67,6 @@ public class ShiroConfiguration {
      * SpringShiroFilter首先注册到spring容器
      * 然后被包装成FilterRegistrationBean
      * 最后通过FilterRegistrationBean注册到servlet容器
-     *
-     * @return
      */
     @Bean
     public FilterRegistrationBean<DelegatingFilterProxy> delegatingFilterProxy() {

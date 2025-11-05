@@ -1,20 +1,208 @@
-<!doctype html>
-
-<!--注意：引入thymeleaf的名称空间-->
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户登录</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 420px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, #4f6df5, #3a56d5);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .login-header h1 {
+            color: #2d3748;
+            font-weight: 600;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .login-header p {
+            color: #718096;
+            font-size: 16px;
+        }
+
+        .alert-message {
+            background-color: #fed7d7;
+            color: #c53030;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-message::before {
+            content: '!';
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            background-color: #c53030;
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #4a5568;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background-color: #f7fafc;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #4f6df5;
+            box-shadow: 0 0 0 3px rgba(79, 109, 245, 0.2);
+            background-color: white;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(90deg, #4f6df5, #3a56d5);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 109, 245, 0.4);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 24px;
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .login-footer a {
+            color: #4f6df5;
+            text-decoration: none;
+        }
+
+        .login-footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 24px;
+            }
+        }
+    </style>
 </head>
 <body>
-<h3 style="color: red" th:text="${msg}"></h3><br/>
-<form method="post" action="/userLogin">
-    用户名: <input type="text" name="username"><br/>
-    密码: <input type="password" name="password"><br/>
-    <input type="submit" name="submit"><br/>
-</form>
+<div class="login-container">
+    <div class="login-header">
+        <h1>用户登录</h1>
+        <p>请输入您的账号信息</p>
+    </div>
+
+    <!-- 错误消息显示区域 -->
+    <div class="alert-message" th:if="${msg}" th:text="${msg}"></div>
+
+    <form method="post" action="/userLogin">
+        <div class="form-group">
+            <label for="username">用户名</label>
+            <input type="text" id="username" name="username" class="form-control" placeholder="请输入用户名" required>
+        </div>
+
+        <div class="form-group">
+            <label for="password">密码</label>
+            <input type="password" id="password" name="password" class="form-control" placeholder="请输入密码" required>
+        </div>
+
+        <button type="submit" class="btn-submit">登录</button>
+    </form>
+
+    <div class="login-footer">
+        <p>没有账号？<a href="#">立即注册</a> | <a href="#">忘记密码？</a></p>
+    </div>
+</div>
+
+<script>
+    // 简单的表单验证
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
+
+        if (!username || !password) {
+            e.preventDefault();
+            alert('请填写用户名和密码');
+            return false;
+        }
+
+        return true;
+    });
+</script>
 </body>
 </html>
