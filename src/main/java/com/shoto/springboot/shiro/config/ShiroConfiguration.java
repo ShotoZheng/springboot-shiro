@@ -1,9 +1,9 @@
 package com.shoto.springboot.shiro.config;
 
 import com.shoto.springboot.shiro.realm.UserShiroRealm;
+import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,20 +20,20 @@ public class ShiroConfiguration {
      */
     @Bean("securityManager")
     public DefaultWebSecurityManager securityManager() {
-        return new DefaultWebSecurityManager(userShiroRealm());
+        return new DefaultWebSecurityManager(userShiroRealm(hashedCredentialsMatcher()));
     }
 
     /**
      * 配置自定义的Realm
      */
     @Bean
-    public UserShiroRealm userShiroRealm() {
-        return new UserShiroRealm();
+    public UserShiroRealm userShiroRealm(HashedCredentialsMatcher matcher) {
+        UserShiroRealm userShiroRealm = new UserShiroRealm();
+        userShiroRealm.setCredentialsMatcher(matcher);
+        return userShiroRealm;
     }
 
     /**
-     * 如果没有此name,将会找不到shiroFilter的Bean
-     * <p>
      * Shiro内置过滤器，可以实现权限相关的拦截器
      * 常用的过滤器：
      * anon: 无需认证（登录）可以访问
@@ -43,7 +43,7 @@ public class ShiroConfiguration {
      * role: 该资源必须得到角色权限才可以访问
      */
     @Bean
-    public ShiroFilterFactoryBean shiroFilter(@Qualifier("securityManager") DefaultWebSecurityManager securityManager) {
+    public ShiroFilterFactoryBean userShiroFilter(DefaultWebSecurityManager securityManager) {
         ShiroFilterFactoryBean shiroFilterFactoryBean = new ShiroFilterFactoryBean();
         shiroFilterFactoryBean.setSecurityManager(securityManager);
         //表示指定登录页面
@@ -73,8 +73,21 @@ public class ShiroConfiguration {
         FilterRegistrationBean<DelegatingFilterProxy> filterRegistrationBean = new FilterRegistrationBean<>();
         DelegatingFilterProxy proxy = new DelegatingFilterProxy();
         proxy.setTargetFilterLifecycle(true);
-        proxy.setTargetBeanName("shiroFilter");
+        proxy.setTargetBeanName("userShiroFilter");
         filterRegistrationBean.setFilter(proxy);
         return filterRegistrationBean;
+    }
+
+    /**
+     * 密码匹配凭证管理器（密码加密需要此配置）
+     */
+    @Bean
+    public HashedCredentialsMatcher hashedCredentialsMatcher() {
+        HashedCredentialsMatcher hashedCredentialsMatcher = new HashedCredentialsMatcher();
+        //加密算法
+        hashedCredentialsMatcher.setHashAlgorithmName("MD5");
+        // 设置加密次数
+        hashedCredentialsMatcher.setHashIterations(1024);
+        return hashedCredentialsMatcher;
     }
 }

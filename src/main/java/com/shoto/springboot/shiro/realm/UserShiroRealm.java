@@ -5,6 +5,7 @@ import com.shoto.springboot.shiro.mapper.UserMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.realm.AuthenticatingRealm;
+import org.apache.shiro.util.ByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
@@ -19,7 +20,7 @@ public class UserShiroRealm extends AuthenticatingRealm {
     @Override
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authenticationToken) throws AuthenticationException {
         UsernamePasswordToken usernamePasswordToken = (UsernamePasswordToken) authenticationToken;
-        //1.判断用户名, token中的用户信息是登录时候传进来的
+        //判断用户名, token中的用户信息是登录时候传进来的
         String username = usernamePasswordToken.getUsername();
         char[] password = usernamePasswordToken.getPassword();
         log.info("username:{}", username);
@@ -40,8 +41,9 @@ public class UserShiroRealm extends AuthenticatingRealm {
         //数据库中查询的密码
         Object credentials = user.getPassword();
         String realmName = getName();
+        ByteSource byteSource = ByteSource.Util.bytes(username);
 
-        //2.判断密码
-        return new SimpleAuthenticationInfo(principal, credentials, null, realmName);
+        //判断密码
+        return new SimpleAuthenticationInfo(principal, credentials, byteSource, realmName);
     }
 }
