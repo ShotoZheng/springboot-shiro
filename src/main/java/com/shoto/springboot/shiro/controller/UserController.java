@@ -44,12 +44,17 @@ public class UserController {
         return "unauthorized";
     }
 
+    @GetMapping("/remember")
+    public String remember() {
+        return "remember";
+    }
+
     @PostMapping(value = "/userLogin")
-    public String toLogin(String username, String password, Model model) {
+    public String toLogin(String username, String password, Model model, boolean rememberMe) {
         //1.获取Subject
         Subject subject = SecurityUtils.getSubject();
         //2.封装用户数据
-        UsernamePasswordToken token = new UsernamePasswordToken(username, password);
+        UsernamePasswordToken token = new UsernamePasswordToken(username, password, rememberMe);
         try {
             //3.执行登录方法
             subject.login(token);

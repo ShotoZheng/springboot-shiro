@@ -41,6 +41,7 @@ public class UserShiroRealm extends AuthenticatingRealm {
         //数据库中查询的密码
         Object credentials = user.getPassword();
         String realmName = getName();
+        // salt value
         ByteSource byteSource = ByteSource.Util.bytes(username);
 
         //判断密码

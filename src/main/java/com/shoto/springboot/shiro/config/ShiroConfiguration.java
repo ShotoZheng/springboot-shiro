@@ -2,8 +2,11 @@ package com.shoto.springboot.shiro.config;
 
 import com.shoto.springboot.shiro.realm.UserShiroRealm;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
+import org.apache.shiro.codec.Base64;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
+import org.apache.shiro.web.mgt.CookieRememberMeManager;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
+import org.apache.shiro.web.servlet.SimpleCookie;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,7 +23,10 @@ public class ShiroConfiguration {
      */
     @Bean("securityManager")
     public DefaultWebSecurityManager securityManager() {
-        return new DefaultWebSecurityManager(userShiroRealm(hashedCredentialsMatcher()));
+        UserShiroRealm userShiroRealm = userShiroRealm(hashedCredentialsMatcher());
+        DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager(userShiroRealm);
+        securityManager.setRememberMeManager(rememberMeManager());
+        return securityManager;
     }
 
     /**
@@ -47,7 +53,7 @@ public class ShiroConfiguration {
         ShiroFilterFactoryBean shiroFilterFactoryBean = new ShiroFilterFactoryBean();
         shiroFilterFactoryBean.setSecurityManager(securityManager);
         //表示指定登录页面
-        shiroFilterFactoryBean.setLoginUrl("/userLogin");
+        shiroFilterFactoryBean.setLoginUrl("/index");
         //登录成功后要跳转的链接
         shiroFilterFactoryBean.setSuccessUrl("/success");
         //未授权页面
@@ -57,6 +63,8 @@ public class ShiroConfiguration {
         //所有匿名用户均可访问到Controller层的该方法下
         filterChainDefinitionMap.put("/index", "anon");
         filterChainDefinitionMap.put("/userLogin", "anon");
+        //user表示配置记住我或认证通过可以访问的地址
+        filterChainDefinitionMap.put("/remember", "user");
         //authc:所有url都必须认证通过才可以访问; anon:所有url都都可以匿名访问
         filterChainDefinitionMap.put("/**", "authc");
         shiroFilterFactoryBean.setFilterChainDefinitionMap(filterChainDefinitionMap);
@@ -89,5 +97,31 @@ public class ShiroConfiguration {
         // 设置加密次数
         hashedCredentialsMatcher.setHashIterations(1024);
         return hashedCredentialsMatcher;
+    }
+
+    /**
+     * 设置cookie
+     */
+    @Bean
+    public SimpleCookie rememberMeCookie() {
+        //这个参数是cookie的名称,对应前端的checkbox的name=rememberMe
+        SimpleCookie simpleCookie = new SimpleCookie("rememberMe");
+        //如果httpOnly设置为true，则客户端不会暴露给客户端脚本代码，使用HttpOnly cookie有助于减少某些类型的跨站点脚本攻击；
+        simpleCookie.setHttpOnly(true);
+        //记住我cookie生效时间10秒钟(单位秒)
+        simpleCookie.setMaxAge(10);
+        return simpleCookie;
+    }
+
+    /**
+     * cookie管理对象,记住我功能
+     */
+    @Bean
+    public CookieRememberMeManager rememberMeManager() {
+        CookieRememberMeManager cookieRememberMeManager = new CookieRememberMeManager();
+        cookieRememberMeManager.setCookie(rememberMeCookie());
+        // rememberMe cookie加密的密钥  建议每个项目都不一样 默认AES算法 密钥长度(128 256 512 位)
+        cookieRememberMeManager.setCipherKey(Base64.decode("4AvVhmFLUs0KTA3Kprsdag=="));
+        return cookieRememberMeManager;
     }
 }

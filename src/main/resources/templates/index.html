@@ -114,6 +114,25 @@
             background-color: white;
         }
 
+        .remember-me {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .remember-me input {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            accent-color: #4f6df5;
+        }
+
+        .remember-me label {
+            color: #4a5568;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
         .btn-submit {
             width: 100%;
             background: linear-gradient(90deg, #4f6df5, #3a56d5);
@@ -181,6 +200,11 @@
             <input type="password" id="password" name="password" class="form-control" placeholder="请输入密码" required>
         </div>
 
+        <div class="remember-me">
+            <input type="checkbox" id="rememberMe" name="rememberMe">
+            <label for="rememberMe">记住我</label>
+        </div>
+
         <button type="submit" class="btn-submit">登录</button>
     </form>
 
@@ -202,6 +226,29 @@
         }
 
         return true;
+    });
+
+    // 从本地存储获取保存的用户名
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedUsername = localStorage.getItem('savedUsername');
+        const rememberCheckbox = document.getElementById('rememberMe');
+
+        if (savedUsername) {
+            document.getElementById('username').value = savedUsername;
+            rememberCheckbox.checked = true;
+        }
+
+        // 保存用户名到本地存储
+        rememberCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                const username = document.getElementById('username').value.trim();
+                if (username) {
+                    localStorage.setItem('savedUsername', username);
+                }
+            } else {
+                localStorage.removeItem('savedUsername');
+            }
+        });
     });
 </script>
 </body>
