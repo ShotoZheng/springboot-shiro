@@ -53,4 +53,10 @@ public class PageController {
     public String adminList(){
         return "list";
     }
+
+    @RequiresPermissions(value = "user:list")
+    @RequestMapping("/userList")
+    public String userList(){
+        return "user-list";
+    }
 }

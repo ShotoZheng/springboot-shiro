@@ -9,6 +9,8 @@ import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.CookieRememberMeManager;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.web.servlet.SimpleCookie;
+import org.crazycake.shiro.RedisCacheManager;
+import org.crazycake.shiro.RedisManager;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -59,6 +61,7 @@ public class ShiroConfiguration {
         UserShiroAuthorizingRealm userShiroAuthorizingRealm = userShiroAuthorizingRealm(hashedCredentialsMatcher());
         DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager(userShiroAuthorizingRealm);
         securityManager.setRememberMeManager(rememberMeManager());
+        securityManager.setCacheManager(redisCacheManager());
         return securityManager;
     }
 
@@ -167,5 +170,27 @@ public class ShiroConfiguration {
         // rememberMe cookie加密的密钥  建议每个项目都不一样 默认AES算法 密钥长度(128 256 512 位)
         cookieRememberMeManager.setCipherKey(Base64.decode("4AvVhmFLUs0KTA3Kprsdag=="));
         return cookieRememberMeManager;
+    }
+
+    /**
+     * 配置Redis缓存管理器
+     */
+    @Bean
+    public RedisCacheManager redisCacheManager() {
+        RedisCacheManager redisCacheManager = new RedisCacheManager();
+        //设置redis管理器
+        redisCacheManager.setRedisManager(redisManager());
+        return redisCacheManager;
+    }
+
+    /**
+     * 配置redis管理器
+     */
+    @Bean
+    public RedisManager redisManager() {
+        RedisManager redisManager = new RedisManager();
+        //设置一小时超时，单位是秒
+        redisManager.setExpire(3600);
+        return redisManager;
     }
 }
