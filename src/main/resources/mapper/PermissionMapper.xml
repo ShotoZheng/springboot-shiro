@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.shoto.springboot.shiro.mapper.PermissionMapper">
+
+    <select id="getAllPermissionListByUsername" resultType="com.shoto.springboot.shiro.entity.Permission">
+        SELECT t1.* FROM permission t1
+        LEFT JOIN role_permission t2 ON t1.id = t2.pid
+        LEFT JOIN role t3 ON t2.roleid = t3.id
+        LEFT JOIN user_role t4 ON t3.id = t4.role_id
+        LEFT JOIN user t5 ON t5.id = t4.user_id
+        WHERE t5.username =#{username}
+    </select>
+
+</mapper>

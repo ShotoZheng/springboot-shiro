@@ -28,27 +28,6 @@ public class UserController {
         return userMapper.findUserByName("admin");
     }
 
-    @GetMapping("/index")
-    public String index() {
-        //返回index.html
-        return "index";
-    }
-
-    @GetMapping("/success")
-    public String success() {
-        return "success";
-    }
-
-    @RequestMapping("/unauthorized")
-    public String unauthorized() {
-        return "unauthorized";
-    }
-
-    @GetMapping("/remember")
-    public String remember() {
-        return "remember";
-    }
-
     @PostMapping(value = "/userLogin")
     public String toLogin(String username, String password, Model model, boolean rememberMe) {
         //1.获取Subject

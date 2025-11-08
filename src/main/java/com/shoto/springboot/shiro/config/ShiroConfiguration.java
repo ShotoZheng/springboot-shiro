@@ -1,8 +1,10 @@
 package com.shoto.springboot.shiro.config;
 
-import com.shoto.springboot.shiro.realm.UserShiroRealm;
+import com.shoto.springboot.shiro.realm.UserShiroAuthenticatingRealm;
+import com.shoto.springboot.shiro.realm.UserShiroAuthorizingRealm;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.codec.Base64;
+import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.CookieRememberMeManager;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
@@ -21,22 +23,53 @@ public class ShiroConfiguration {
     /**
      * 将Realm注册到securityManager中
      */
+//    @Bean("securityManager")
+//    public DefaultWebSecurityManager securityManager() {
+//        UserShiroAuthenticatingRealm userShiroAuthenticatingRealm = userShiroAuthenticatingRealm(hashedCredentialsMatcher());
+//        DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager(userShiroAuthenticatingRealm);
+//        securityManager.setRememberMeManager(rememberMeManager());
+//        return securityManager;
+//    }
+
+    /**
+     * 配置自定义认证Realm
+     */
+    @Bean
+    public UserShiroAuthenticatingRealm userShiroAuthenticatingRealm(HashedCredentialsMatcher matcher) {
+        UserShiroAuthenticatingRealm userShiroAuthenticatingRealm = new UserShiroAuthenticatingRealm();
+        userShiroAuthenticatingRealm.setCredentialsMatcher(matcher);
+        return userShiroAuthenticatingRealm;
+    }
+
+    /**
+     * 开启Shiro注解配置
+     */
+    @Bean
+    public AuthorizationAttributeSourceAdvisor authorizationAttributeSourceAdvisor(DefaultWebSecurityManager securityManager) {
+        AuthorizationAttributeSourceAdvisor authorizationAttributeSourceAdvisor = new AuthorizationAttributeSourceAdvisor();
+        authorizationAttributeSourceAdvisor.setSecurityManager(securityManager);
+        return authorizationAttributeSourceAdvisor;
+    }
+
+    /**
+     * 认证
+     */
     @Bean("securityManager")
     public DefaultWebSecurityManager securityManager() {
-        UserShiroRealm userShiroRealm = userShiroRealm(hashedCredentialsMatcher());
-        DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager(userShiroRealm);
+        UserShiroAuthorizingRealm userShiroAuthorizingRealm = userShiroAuthorizingRealm(hashedCredentialsMatcher());
+        DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager(userShiroAuthorizingRealm);
         securityManager.setRememberMeManager(rememberMeManager());
         return securityManager;
     }
 
     /**
-     * 配置自定义的Realm
+     * 配置自定义授权Realm
      */
     @Bean
-    public UserShiroRealm userShiroRealm(HashedCredentialsMatcher matcher) {
-        UserShiroRealm userShiroRealm = new UserShiroRealm();
-        userShiroRealm.setCredentialsMatcher(matcher);
-        return userShiroRealm;
+    public UserShiroAuthorizingRealm userShiroAuthorizingRealm(HashedCredentialsMatcher matcher) {
+        UserShiroAuthorizingRealm userShiroAuthorizingRealm = new UserShiroAuthorizingRealm();
+        userShiroAuthorizingRealm.setCredentialsMatcher(matcher);
+        return userShiroAuthorizingRealm;
     }
 
     /**
@@ -52,23 +85,34 @@ public class ShiroConfiguration {
     public ShiroFilterFactoryBean userShiroFilter(DefaultWebSecurityManager securityManager) {
         ShiroFilterFactoryBean shiroFilterFactoryBean = new ShiroFilterFactoryBean();
         shiroFilterFactoryBean.setSecurityManager(securityManager);
-        //表示指定登录页面
         shiroFilterFactoryBean.setLoginUrl("/index");
-        //登录成功后要跳转的链接
         shiroFilterFactoryBean.setSuccessUrl("/success");
-        //未授权页面
         shiroFilterFactoryBean.setUnauthorizedUrl("/unauthorized");
-        //拦截器, 配置不会被拦截的链接 顺序判断
-        Map<String, String> filterChainDefinitionMap = new LinkedHashMap<>();
-        //所有匿名用户均可访问到Controller层的该方法下
-        filterChainDefinitionMap.put("/index", "anon");
-        filterChainDefinitionMap.put("/userLogin", "anon");
-        //user表示配置记住我或认证通过可以访问的地址
-        filterChainDefinitionMap.put("/remember", "user");
-        //authc:所有url都必须认证通过才可以访问; anon:所有url都都可以匿名访问
-        filterChainDefinitionMap.put("/**", "authc");
+
+        Map<String, String> filterChainDefinitionMap = getFilterChainDefinitionMap();
+
         shiroFilterFactoryBean.setFilterChainDefinitionMap(filterChainDefinitionMap);
         return shiroFilterFactoryBean;
+    }
+
+    private Map<String, String> getFilterChainDefinitionMap() {
+        Map<String, String> filterChainDefinitionMap = new LinkedHashMap<>();
+
+        // 1. 首先配置匿名访问的路径
+        filterChainDefinitionMap.put("/index", "anon");
+        filterChainDefinitionMap.put("/userLogin", "anon");
+        filterChainDefinitionMap.put("/unauthorized", "anon"); // 确保未授权页面可以访问
+
+        // 2. 然后配置需要特定角色/权限的路径
+        filterChainDefinitionMap.put("/admin", "authc, roles[admin]"); // 同时需要认证和角色
+        filterChainDefinitionMap.put("/user", "authc, roles[user]");
+
+        // 3. 配置记住我功能的路径
+        filterChainDefinitionMap.put("/remember", "user");
+
+        // 4. 最后配置通用认证规则
+        filterChainDefinitionMap.put("/**", "authc");
+        return filterChainDefinitionMap;
     }
 
     /**
