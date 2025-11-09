@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>在线用户管理</title>
+</head>
+<body>
+<h3>在线用户数: <span th:text="${onlineUserList.size()}"></span></h3>
+<table border="1px">
+    <tr>
+        <th>用户id</th>
+        <th>用户名称</th>
+        <th>登录时间</th>
+        <th>最后访问时间</th>
+        <th>主机</th>
+        <th>状态</th>
+        <th>会话ID</th>
+    </tr>
+    <tr th:each="user : ${onlineUserList}">
+        <th th:text="${user.userId}"></th>
+        <th th:text="${user.username}"></th>
+        <th th:text="${#dates.format(user.startTimestamp, 'yyyy-MM-dd HH:mm:ss')}"></th>
+        <th th:text="${#dates.format(user.lastAccessTime, 'yyyy-MM-dd HH:mm:ss')}"></th>
+        <th th:text="${user.host}"></th>
+        <th th:text="${user.status}"></th>
+        <th th:text="${user.sessionId}"></th>
+    </tr>
+</table>
+</body>
+</html>

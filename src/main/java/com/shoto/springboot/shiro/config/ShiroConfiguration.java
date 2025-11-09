@@ -1,22 +1,30 @@
 package com.shoto.springboot.shiro.config;
 
+import com.shoto.springboot.shiro.listener.UserShiroSessionListener;
 import com.shoto.springboot.shiro.realm.UserShiroAuthenticatingRealm;
 import com.shoto.springboot.shiro.realm.UserShiroAuthorizingRealm;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.codec.Base64;
+import org.apache.shiro.session.SessionListener;
+import org.apache.shiro.session.mgt.SessionManager;
+import org.apache.shiro.session.mgt.eis.SessionDAO;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.CookieRememberMeManager;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.web.servlet.SimpleCookie;
+import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.crazycake.shiro.RedisCacheManager;
 import org.crazycake.shiro.RedisManager;
+import org.crazycake.shiro.RedisSessionDAO;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.filter.DelegatingFilterProxy;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Configuration
@@ -60,8 +68,12 @@ public class ShiroConfiguration {
     public DefaultWebSecurityManager securityManager() {
         UserShiroAuthorizingRealm userShiroAuthorizingRealm = userShiroAuthorizingRealm(hashedCredentialsMatcher());
         DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager(userShiroAuthorizingRealm);
+        // 设置记住我
         securityManager.setRememberMeManager(rememberMeManager());
+        // 设置缓存
         securityManager.setCacheManager(redisCacheManager());
+        //设置会话管理器
+        securityManager.setSessionManager(sessionManager());
         return securityManager;
     }
 
@@ -105,6 +117,7 @@ public class ShiroConfiguration {
         filterChainDefinitionMap.put("/index", "anon");
         filterChainDefinitionMap.put("/userLogin", "anon");
         filterChainDefinitionMap.put("/unauthorized", "anon"); // 确保未授权页面可以访问
+        filterChainDefinitionMap.put("/forceLogout", "anon"); // 踢人
 
         // 2. 然后配置需要特定角色/权限的路径
         filterChainDefinitionMap.put("/admin", "authc, roles[admin]"); // 同时需要认证和角色
@@ -192,5 +205,33 @@ public class ShiroConfiguration {
         //设置一小时超时，单位是秒
         redisManager.setExpire(3600);
         return redisManager;
+    }
+
+    /**
+     * 注册RedisSessionDAO
+     */
+    @Bean
+    public SessionDAO sessionDAO() {
+        RedisSessionDAO redisSessionDAO = new RedisSessionDAO();
+        redisSessionDAO.setRedisManager(redisManager());
+        return redisSessionDAO;
+    }
+
+    /**
+     * 注册SessionManager会话管理器
+     */
+    @Bean
+    public SessionManager sessionManager() {
+        DefaultWebSessionManager sessionManager = new DefaultWebSessionManager();
+        List<SessionListener> listeners = new ArrayList<>();
+        //添加自己实现的会话监听器
+        listeners.add(new UserShiroSessionListener());
+        //添加会话监听器给sessionManager管理
+        sessionManager.setSessionListeners(listeners);
+        //添加SessionDAO给sessionManager管理
+        sessionManager.setSessionDAO(sessionDAO());
+        //设置全局(项目)session超时单位 毫秒   -1为永不超时
+        sessionManager.setGlobalSessionTimeout(360000);
+        return sessionManager;
     }
 }
