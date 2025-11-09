@@ -91,6 +91,12 @@
             <version>8.0.33</version>
             <scope>runtime</scope>
         </dependency>
+        <!--jwt 依赖-->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt</artifactId>
+            <version>0.9.1</version>
+        </dependency>
     </dependencies>
 
     <build>

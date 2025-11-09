@@ -21,3 +21,9 @@ mybatis:
   type-aliases-package: com.shoto.springboot.shiro.entity
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+#jwt 配置
+jwt:
+  config:
+    secret: tawson
+    timeout: 3600
+    no-auth-url: /userLogin,

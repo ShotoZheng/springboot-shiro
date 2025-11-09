@@ -1,10 +1,16 @@
 package com.shoto.springboot.shiro.config;
 
+import com.shoto.springboot.shiro.filter.UserJWTFilter;
 import com.shoto.springboot.shiro.listener.UserShiroSessionListener;
+import com.shoto.springboot.shiro.realm.UserJWTShiroAuthorizingRealm;
 import com.shoto.springboot.shiro.realm.UserShiroAuthenticatingRealm;
 import com.shoto.springboot.shiro.realm.UserShiroAuthorizingRealm;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
+import org.apache.shiro.authc.credential.SimpleCredentialsMatcher;
 import org.apache.shiro.codec.Base64;
+import org.apache.shiro.mgt.DefaultSessionStorageEvaluator;
+import org.apache.shiro.mgt.DefaultSubjectDAO;
+import org.apache.shiro.realm.Realm;
 import org.apache.shiro.session.SessionListener;
 import org.apache.shiro.session.mgt.SessionManager;
 import org.apache.shiro.session.mgt.eis.SessionDAO;
@@ -17,11 +23,13 @@ import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.crazycake.shiro.RedisCacheManager;
 import org.crazycake.shiro.RedisManager;
 import org.crazycake.shiro.RedisSessionDAO;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.filter.DelegatingFilterProxy;
 
+import javax.servlet.Filter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,6 +37,9 @@ import java.util.Map;
 
 @Configuration
 public class ShiroConfiguration {
+
+    @Autowired
+    private JWTProperties jwtProperties;
 
     /**
      * 将Realm注册到securityManager中
@@ -41,6 +52,13 @@ public class ShiroConfiguration {
 //        return securityManager;
 //    }
 
+    @Bean
+    public UserJWTShiroAuthorizingRealm userJWTShiroAuthorizingRealm() {
+        UserJWTShiroAuthorizingRealm userJWTShiroAuthorizingRealm = new UserJWTShiroAuthorizingRealm();
+        userJWTShiroAuthorizingRealm.setCredentialsMatcher(new SimpleCredentialsMatcher());
+        return userJWTShiroAuthorizingRealm;
+    }
+
     /**
      * 配置自定义认证Realm
      */
@@ -49,6 +67,17 @@ public class ShiroConfiguration {
         UserShiroAuthenticatingRealm userShiroAuthenticatingRealm = new UserShiroAuthenticatingRealm();
         userShiroAuthenticatingRealm.setCredentialsMatcher(matcher);
         return userShiroAuthenticatingRealm;
+    }
+
+
+    /**
+     * 配置自定义授权Realm
+     */
+    @Bean
+    public UserShiroAuthorizingRealm userShiroAuthorizingRealm(HashedCredentialsMatcher matcher) {
+        UserShiroAuthorizingRealm userShiroAuthorizingRealm = new UserShiroAuthorizingRealm();
+        userShiroAuthorizingRealm.setCredentialsMatcher(matcher);
+        return userShiroAuthorizingRealm;
     }
 
     /**
@@ -66,25 +95,28 @@ public class ShiroConfiguration {
      */
     @Bean("securityManager")
     public DefaultWebSecurityManager securityManager() {
-        UserShiroAuthorizingRealm userShiroAuthorizingRealm = userShiroAuthorizingRealm(hashedCredentialsMatcher());
-        DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager(userShiroAuthorizingRealm);
+        // 设置多个Realm
+        List<Realm> realms = new ArrayList<>();
+        realms.add(userShiroAuthorizingRealm(hashedCredentialsMatcher()));
+        realms.add(userJWTShiroAuthorizingRealm());
+        DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
+        securityManager.setRealms(realms);
+
         // 设置记住我
         securityManager.setRememberMeManager(rememberMeManager());
         // 设置缓存
         securityManager.setCacheManager(redisCacheManager());
         //设置会话管理器
-        securityManager.setSessionManager(sessionManager());
+//        securityManager.setSessionManager(sessionManager());
+        /*
+         * 关闭shiro自带的session
+         */
+        DefaultSubjectDAO subjectDAO = new DefaultSubjectDAO();
+        DefaultSessionStorageEvaluator defaultSessionStorageEvaluator = new DefaultSessionStorageEvaluator();
+        defaultSessionStorageEvaluator.setSessionStorageEnabled(false);
+        subjectDAO.setSessionStorageEvaluator(defaultSessionStorageEvaluator);
+        securityManager.setSubjectDAO(subjectDAO);
         return securityManager;
-    }
-
-    /**
-     * 配置自定义授权Realm
-     */
-    @Bean
-    public UserShiroAuthorizingRealm userShiroAuthorizingRealm(HashedCredentialsMatcher matcher) {
-        UserShiroAuthorizingRealm userShiroAuthorizingRealm = new UserShiroAuthorizingRealm();
-        userShiroAuthorizingRealm.setCredentialsMatcher(matcher);
-        return userShiroAuthorizingRealm;
     }
 
     /**
@@ -100,6 +132,12 @@ public class ShiroConfiguration {
     public ShiroFilterFactoryBean userShiroFilter(DefaultWebSecurityManager securityManager) {
         ShiroFilterFactoryBean shiroFilterFactoryBean = new ShiroFilterFactoryBean();
         shiroFilterFactoryBean.setSecurityManager(securityManager);
+
+        // 添加自己的自定义jwt过滤器，并取名为jwt
+        LinkedHashMap<String, Filter> filtersMap = new LinkedHashMap<>();
+        filtersMap.put("jwt", new UserJWTFilter(jwtProperties));
+        shiroFilterFactoryBean.setFilters(filtersMap);
+
         shiroFilterFactoryBean.setLoginUrl("/index");
         shiroFilterFactoryBean.setSuccessUrl("/success");
         shiroFilterFactoryBean.setUnauthorizedUrl("/unauthorized");
@@ -127,7 +165,9 @@ public class ShiroConfiguration {
         filterChainDefinitionMap.put("/remember", "user");
 
         // 4. 最后配置通用认证规则
-        filterChainDefinitionMap.put("/**", "authc");
+//        filterChainDefinitionMap.put("/**", "authc");
+        // 自定义 jwt 认证
+        filterChainDefinitionMap.put("/**", "jwt");
         return filterChainDefinitionMap;
     }
 
