@@ -51,7 +51,7 @@ public class PageController {
     @RequiresPermissions(value = "admin:list")
     @RequestMapping("/adminList")
     public String adminList(){
-        return "list";
+        return "admin-list";
     }
 
     @RequiresPermissions(value = "user:list")
